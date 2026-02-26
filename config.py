@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     # Dev mode
     skip_payment_verification: bool = False
 
+    # Admin
+    admin_api_key: str = ""
+
     # Pricing (USDC)
     tier_1_price: float = 0.02
     tier_2_price: float = 0.20

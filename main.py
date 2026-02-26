@@ -176,6 +176,51 @@ async def health_check():
     }
 
 
+@app.get("/v1/debug/connectivity")
+async def debug_connectivity():
+    """Diagnostic endpoint — tests connectivity to OpenAI and Pinecone. Remove before production."""
+    import os
+    results = {}
+
+    # Check env vars (show first/last 4 chars only)
+    oai_key = os.environ.get("OPENAI_API_KEY", "")
+    pc_key = os.environ.get("PINECONE_API_KEY", "")
+    results["openai_key_set"] = bool(oai_key)
+    results["openai_key_preview"] = f"{oai_key[:8]}...{oai_key[-4:]}" if len(oai_key) > 12 else "too_short"
+    results["pinecone_key_set"] = bool(pc_key)
+
+    # Test OpenAI connectivity
+    try:
+        from openai import AsyncOpenAI
+        settings = get_settings()
+        client = AsyncOpenAI(api_key=settings.openai_api_key)
+        resp = await client.embeddings.create(
+            model="text-embedding-3-small",
+            input=["test"],
+            dimensions=1536,
+        )
+        results["openai_status"] = "ok"
+        results["openai_embedding_dim"] = len(resp.data[0].embedding)
+    except Exception as e:
+        results["openai_status"] = "error"
+        results["openai_error"] = f"{type(e).__name__}: {str(e)[:300]}"
+
+    # Test Pinecone connectivity
+    try:
+        from pinecone import Pinecone
+        settings = get_settings()
+        pc = Pinecone(api_key=settings.pinecone_api_key)
+        index = pc.Index(settings.pinecone_index_name)
+        stats = index.describe_index_stats()
+        results["pinecone_status"] = "ok"
+        results["pinecone_vectors"] = stats.total_vector_count
+    except Exception as e:
+        results["pinecone_status"] = "error"
+        results["pinecone_error"] = f"{type(e).__name__}: {str(e)[:300]}"
+
+    return results
+
+
 @app.get("/v1/query")
 @limiter.limit("100/minute")
 async def knowledge_query(
@@ -199,7 +244,12 @@ async def knowledge_query(
 
     logger.info("tier1_query", query=q, pillar=pillar, limit=limit)
 
-    results = await _retrieval.query(question=q, top_k=limit, pillar=pillar)
+    try:
+        results = await _retrieval.query(question=q, top_k=limit, pillar=pillar)
+    except Exception as e:
+        logger.error("tier1_query_error", error=str(e), error_type=type(e).__name__)
+        raise HTTPException(status_code=503, detail=f"Service temporarily unavailable: {type(e).__name__}")
+
     response = _retrieval.format_tier1_response(results, q, include_citations)
 
     latency = (time.time() - start) * 1000
@@ -307,12 +357,95 @@ async def lifestyle_assessment(request: Request, body: AssessmentRequest):
     return result
 
 
+# ── Terms of Service & Legal ──────────────────────────────────────────────────
+
+
+@app.get("/v1/terms")
+async def terms_of_service():
+    """Terms of Service and legal disclaimers."""
+    return {
+        "service": "B.O.N.S.A.I. Health Intelligence API",
+        "version": "3.0.0",
+        "effective_date": "2026-03-01",
+        "terms_of_service": {
+            "acceptance": (
+                "By accessing any B.O.N.S.A.I. API endpoint or submitting payment, "
+                "you agree to these terms. If you do not agree, do not use this API."
+            ),
+            "service_description": (
+                "B.O.N.S.A.I. provides evidence-based whole-food plant-based (WFPB) "
+                "lifestyle medicine intelligence via 4 paid API tiers. Content is derived "
+                "from published clinical guidelines (ACLM, AHA, ADA, WHO) and 637+ "
+                "peer-reviewed references."
+            ),
+            "not_medical_advice": (
+                "ALL CONTENT RETURNED BY THIS API IS EDUCATIONAL AND INFORMATIONAL ONLY. "
+                "It does NOT constitute medical advice, diagnosis, or treatment. It is NOT "
+                "a substitute for professional medical advice, diagnosis, or treatment from "
+                "a qualified healthcare provider. Always seek the advice of your physician "
+                "or other qualified health provider with any questions you may have regarding "
+                "a medical condition. Never disregard professional medical advice or delay in "
+                "seeking it because of information returned by this API."
+            ),
+            "no_fda_evaluation": (
+                "Statements and recommendations returned by this API have not been evaluated "
+                "by the U.S. Food and Drug Administration (FDA). This API is not intended to "
+                "diagnose, treat, cure, or prevent any disease."
+            ),
+            "limitation_of_liability": (
+                "B.O.N.S.A.I. and its operators shall not be held liable for any damages, "
+                "injuries, or adverse health outcomes arising from the use of information "
+                "provided by this API. Users assume all risk associated with acting on "
+                "API-generated content. In no event shall liability exceed the amount paid "
+                "for the specific API call that gave rise to the claim."
+            ),
+            "payment_terms": (
+                "Payments are processed via the x402 protocol using USDC on the Base network. "
+                "All payments are final and non-refundable. Pricing is per-request as listed "
+                "in the API documentation and MCP manifest."
+            ),
+            "data_handling": (
+                "B.O.N.S.A.I. does not store, log, or retain any personally identifiable "
+                "health information (PHI) submitted via API requests. Query content is processed "
+                "in memory and discarded after the response is returned. No user accounts are "
+                "required. We do not sell or share any data."
+            ),
+            "ai_disclosure": (
+                "Tiers 2-4 use AI language models (Anthropic Claude) to generate responses. "
+                "AI-generated content may contain errors, omissions, or inaccuracies. All "
+                "outputs should be reviewed by qualified professionals before clinical application."
+            ),
+            "modifications": (
+                "We reserve the right to modify these terms, pricing, or API functionality "
+                "at any time. Continued use after changes constitutes acceptance."
+            ),
+        },
+        "pricing": {
+            "tier_1_query": "$0.02 USDC",
+            "tier_2_protocol": "$0.20 USDC",
+            "tier_3_lab_protocol": "$0.45 USDC",
+            "tier_4_assessment": "$0.85 USDC",
+            "payment_network": "Base (Ethereum L2)",
+            "payment_token": "USDC",
+            "payment_protocol": "x402",
+        },
+        "contact": "rabya.valla@gmail.com",
+    }
+
+
 # ── Monitoring ────────────────────────────────────────────────────────────────
 
 
 @app.get("/v1/metrics")
-async def get_metrics():
-    """Internal metrics endpoint (protect with API key in production)."""
+async def get_metrics(request: Request):
+    """Internal metrics endpoint — requires admin API key."""
+    settings = get_settings()
+    admin_key = request.headers.get(settings.api_key_header)
+    if not settings.admin_api_key:
+        raise HTTPException(status_code=503, detail="Admin API key not configured")
+    if not admin_key or admin_key != settings.admin_api_key:
+        raise HTTPException(status_code=403, detail="Unauthorized — admin API key required")
+
     avg_latency = {}
     for tier in ["tier_1", "tier_2", "tier_3", "tier_4"]:
         count = metrics["latency_count"][tier]
