@@ -18,11 +18,13 @@ MCP Hive target: March 8, 2026
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
 
 import structlog
 from fastapi import FastAPI, Query, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -209,6 +211,13 @@ def track_request(tier: str, latency_ms: float, price: float):
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
+
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
+async def landing_page():
+    """Serve developer docs at root URL."""
+    docs_path = Path(__file__).parent / "bonsai_developer_docs.html"
+    return HTMLResponse(content=docs_path.read_text())
 
 
 @app.get("/v1/health")

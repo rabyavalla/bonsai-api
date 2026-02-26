@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B.O.N.S.A.I. Health Intelligence API — Developer Docs</title>
+  <style>
+    :root {
+      --green-dark: #1a3a2a;
+      --green-mid: #2d6a4f;
+      --green-light: #40916c;
+      --green-pale: #b7e4c7;
+      --green-wash: #f0faf4;
+      --cream: #fdfaf6;
+      --text: #1a1a1a;
+      --text-secondary: #555;
+      --border: #e0e0e0;
+      --code-bg: #1e1e2e;
+      --code-text: #cdd6f4;
+      --accent: #f4a261;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      color: var(--text);
+      background: var(--cream);
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky;
+      top: 0;
+      background: var(--green-dark);
+      padding: 0.75rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+    }
+    nav .logo {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 1px;
+    }
+    nav .logo span { color: var(--green-pale); }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+    }
+    nav a {
+      color: var(--green-pale);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: #fff; }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 60%, var(--green-light) 100%);
+      color: #fff;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 2.8rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      letter-spacing: -0.5px;
+    }
+    .hero .subtitle {
+      font-size: 1.15rem;
+      color: var(--green-pale);
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      line-height: 1.7;
+    }
+    .hero .badges {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      padding: 0.35rem 0.85rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--green-pale);
+      font-weight: 500;
+    }
+
+    /* SECTIONS */
+    section {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3.5rem 2rem;
+    }
+    section h2 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--green-dark);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 3px solid var(--green-pale);
+    }
+    section h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--green-mid);
+      margin: 2rem 0 0.75rem;
+    }
+    section p {
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    /* PRICING TABLE */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    .pricing-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pricing-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    .pricing-card .tier-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--green-light);
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .pricing-card h4 {
+      font-size: 1rem;
+      color: var(--green-dark);
+      margin-bottom: 0.5rem;
+    }
+    .pricing-card .price {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--green-mid);
+      margin-bottom: 0.25rem;
+    }
+    .pricing-card .price-unit {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .pricing-card .desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.75rem;
+      line-height: 1.5;
+    }
+
+    /* ENDPOINT BLOCKS */
+    .endpoint {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 1.5rem 0;
+      overflow: hidden;
+    }
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--green-wash);
+    }
+    .method {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+    .method.get { background: #dbeafe; color: #1d4ed8; }
+    .method.post { background: #dcfce7; color: #15803d; }
+    .endpoint-path {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--green-dark);
+    }
+    .endpoint-price {
+      margin-left: auto;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: #fff8f0;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+    }
+    .endpoint-body {
+      padding: 1.25rem;
+    }
+    .endpoint-body p {
+      margin-bottom: 0.75rem;
+    }
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0;
+      font-size: 0.85rem;
+    }
+    .param-table th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      background: var(--green-wash);
+      color: var(--green-dark);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .param-table td {
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid var(--border);
+      color: var(--text-secondary);
+    }
+    .param-table code {
+      background: var(--green-wash);
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      font-size: 0.8rem;
+      color: var(--green-dark);
+    }
+    .required {
+      color: #dc2626;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* CODE BLOCKS */
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 1.25rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      line-height: 1.7;
+      margin: 0.75rem 0;
+    }
+    pre .comment { color: #6c7086; }
+    pre .string { color: #a6e3a1; }
+    pre .key { color: #89b4fa; }
+    pre .url { color: #f9e2af; }
+
+    /* HOW IT WORKS */
+    .flow-steps {
+      display: flex;
+      gap: 0;
+      margin: 1.5rem 0;
+      align-items: stretch;
+    }
+    .flow-step {
+      flex: 1;
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      text-align: center;
+      position: relative;
+    }
+    .flow-step:first-child { border-radius: 12px 0 0 12px; }
+    .flow-step:last-child { border-radius: 0 12px 12px 0; }
+    .flow-step .step-num {
+      width: 28px;
+      height: 28px;
+      background: var(--green-mid);
+      color: #fff;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .flow-step h4 {
+      font-size: 0.85rem;
+      color: var(--green-dark);
+      margin-bottom: 0.35rem;
+    }
+    .flow-step p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .flow-arrow {
+      display: flex;
+      align-items: center;
+      font-size: 1.2rem;
+      color: var(--green-light);
+      padding: 0 0.25rem;
+    }
+
+    /* INFO BOX */
+    .info-box {
+      background: var(--green-wash);
+      border-left: 4px solid var(--green-mid);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1rem 0;
+    }
+    .info-box p {
+      color: var(--green-dark);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+    .info-box strong { color: var(--green-dark); }
+
+    .warning-box {
+      background: #fef9ee;
+      border-left: 4px solid var(--accent);
+      padding: 1rem 1.25rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1rem 0;
+    }
+    .warning-box p {
+      color: #78350f;
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    /* CONDITIONS LIST */
+    .conditions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.5rem;
+      margin: 1rem 0;
+    }
+    .condition-chip {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    /* FOOTER */
+    footer {
+      background: var(--green-dark);
+      color: var(--green-pale);
+      text-align: center;
+      padding: 2.5rem 2rem;
+      font-size: 0.85rem;
+      line-height: 1.8;
+    }
+    footer a { color: #fff; }
+
+    /* DISCLAIMER */
+    .disclaimer {
+      background: #f5f5f5;
+      padding: 1.5rem 2rem;
+      font-size: 0.78rem;
+      color: #777;
+      line-height: 1.6;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 1.8rem; }
+      .flow-steps { flex-direction: column; }
+      .flow-step { border-radius: 8px !important; }
+      .flow-arrow { transform: rotate(90deg); justify-content: center; padding: 0.25rem 0; }
+      nav ul { gap: 0.75rem; }
+      nav a { font-size: 0.75rem; }
+      .pricing-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="logo"><span>B.O.N.S.A.I.</span> API</div>
+    <ul>
+      <li><a href="#mcp">Quick Start</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#endpoints">Endpoints</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <h1>Health Intelligence for AI Agents</h1>
+    <p class="subtitle">Evidence-based WFPB lifestyle medicine protocols, lab interpretation, and six-pillar assessments — accessible to any AI agent via a simple API. Pay per call with x402. No API keys. No subscriptions.</p>
+    <div class="badges">
+      <span class="badge">637+ Peer-Reviewed References</span>
+      <span class="badge">ACLM Six Pillars</span>
+      <span class="badge">x402 Payments (USDC)</span>
+      <span class="badge">MCP Compatible</span>
+    </div>
+  </div>
+
+  <!-- WHAT IS BONSAI -->
+  <section id="about">
+    <h2>What is B.O.N.S.A.I.?</h2>
+    <p><strong>B</strong>iologically-driven, <strong>O</strong>bservationally-validated, <strong>N</strong>utritionally-tested, <strong>S</strong>afe, <strong>A</strong>ccessible, <strong>I</strong>ntegrative — a health intelligence framework grounded in whole-food plant-based (WFPB) lifestyle medicine and the ACLM Six Pillars.</p>
+    <p>This API lets your AI agent query our knowledge base, generate condition-specific food-as-medicine protocols, interpret lab results with pattern recognition, and run full six-pillar lifestyle assessments. Every response is backed by clinical evidence from the AHA, ADA, WHO, and peer-reviewed literature.</p>
+
+    <h3>Conditions Covered</h3>
+    <div class="conditions-grid">
+      <div class="condition-chip">Hypertension</div>
+      <div class="condition-chip">Type 2 Diabetes</div>
+      <div class="condition-chip">Hyperlipidemia</div>
+      <div class="condition-chip">Autoimmune</div>
+      <div class="condition-chip">IBS / IBD / Dysbiosis</div>
+      <div class="condition-chip">Weight Management</div>
+      <div class="condition-chip">Iron Deficiency</div>
+      <div class="condition-chip">B12 Deficiency</div>
+      <div class="condition-chip">Vitamin D Deficiency</div>
+      <div class="condition-chip">Bone Health</div>
+      <div class="condition-chip">Mental Health</div>
+      <div class="condition-chip">Pregnancy Nutrition</div>
+    </div>
+
+    <h3>Lab Panels Supported</h3>
+    <div class="conditions-grid">
+      <div class="condition-chip">Lipid Panel</div>
+      <div class="condition-chip">Metabolic Panel</div>
+      <div class="condition-chip">Inflammatory Markers</div>
+      <div class="condition-chip">Micronutrient Panel</div>
+      <div class="condition-chip">Gut Health Markers</div>
+      <div class="condition-chip">Thyroid Panel</div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <h2>Pricing</h2>
+    <p>Pay per call via the <strong>x402 protocol</strong> using USDC on Base (Coinbase L2). No API keys, no monthly billing. Your agent sends a payment header with each request and gets the response instantly.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="tier-label">Tier 1</div>
+        <h4>Knowledge Query</h4>
+        <div class="price">$0.02</div>
+        <div class="price-unit">per call / USDC</div>
+        <p class="desc">Semantic search across the knowledge base. Returns matched chunks with citations. No LLM involved.</p>
+      </div>
+      <div class="pricing-card">
+        <div class="tier-label">Tier 2</div>
+        <h4>Condition Protocol</h4>
+        <div class="price">$0.20</div>
+        <div class="price-unit">per call / USDC</div>
+        <p class="desc">Food-as-medicine protocol for a specific condition. Therapeutic foods, sample meals, and monitoring guidance.</p>
+      </div>
+      <div class="pricing-card">
+        <div class="tier-label">Tier 3</div>
+        <h4>Lab-Informed Protocol</h4>
+        <div class="price">$0.45</div>
+        <div class="price-unit">per call / USDC</div>
+        <p class="desc">Biomarker-calibrated protocol with pattern recognition, risk stratification, and optimal targets.</p>
+      </div>
+      <div class="pricing-card">
+        <div class="tier-label">Tier 4</div>
+        <h4>Lifestyle Assessment</h4>
+        <div class="price">$0.85</div>
+        <div class="price-unit">per call / USDC</div>
+        <p class="desc">Full six-pillar assessment with personalized recommendations, priority ranking, and phased plan.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works">
+    <h2>How It Works</h2>
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <h4>Agent Discovers</h4>
+        <p>Your agent finds B.O.N.S.A.I. via MCP registry or OpenAPI spec</p>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <h4>Agent Pays</h4>
+        <p>x402 header with USDC payment sent automatically with the request</p>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <h4>API Routes</h4>
+        <p>Request routed to the right tier based on endpoint</p>
+      </div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <h4>Agent Gets Answer</h4>
+        <p>Evidence-based response with citations and B.O.N.S.A.I. scoring</p>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <p><strong>No API keys needed.</strong> The x402 payment header is your authentication. Any agent with a USDC wallet on Base can start making requests immediately.</p>
+    </div>
+  </section>
+
+  <!-- API REFERENCE -->
+  <section id="endpoints">
+    <h2>API Reference</h2>
+    <p>Base URL: <code>https://api.bons.ai/v1</code></p>
+
+    <!-- Tier 1: /query -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method get">GET</span>
+        <span class="endpoint-path">/v1/query</span>
+        <span class="endpoint-price">$0.02</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Semantic search across the B.O.N.S.A.I. knowledge base. Returns evidence-based chunks with clinical citations. No LLM call — pure vector retrieval for maximum speed.</p>
+        <table class="param-table">
+          <tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr>
+            <td><code>q</code></td>
+            <td>string</td>
+            <td><span class="required">required</span></td>
+            <td>Natural language health question</td>
+          </tr>
+          <tr>
+            <td><code>pillar</code></td>
+            <td>string</td>
+            <td>optional</td>
+            <td>Filter by pillar: <code>nutrition</code>, <code>physical_activity</code>, <code>sleep</code>, <code>stress_management</code>, <code>substance_avoidance</code>, <code>social_connection</code></td>
+          </tr>
+          <tr>
+            <td><code>limit</code></td>
+            <td>integer</td>
+            <td>optional</td>
+            <td>Max results to return (default: 3)</td>
+          </tr>
+        </table>
+        <h3>Example</h3>
+<pre><span class="comment"># Query the knowledge base</span>
+curl <span class="url">"https://api.bons.ai/v1/query?q=best+foods+for+lowering+blood+pressure&pillar=nutrition&limit=3"</span> \
+  -H <span class="string">"X-402-Payment: &lt;x402_payment_header&gt;"</span></pre>
+      </div>
+    </div>
+
+    <!-- Tier 2: /protocol -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method post">POST</span>
+        <span class="endpoint-path">/v1/protocol</span>
+        <span class="endpoint-price">$0.20</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Generate a B.O.N.S.A.I.-scored food-as-medicine protocol for a specific condition. Returns therapeutic foods ranked by evidence score, sample meals, and monitoring guidance.</p>
+        <table class="param-table">
+          <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr>
+            <td><code>condition</code></td>
+            <td>string</td>
+            <td><span class="required">required</span></td>
+            <td><code>hypertension</code>, <code>type_2_diabetes</code>, <code>hyperlipidemia</code>, <code>autoimmune</code>, <code>gi_health</code>, <code>weight_management</code></td>
+          </tr>
+          <tr>
+            <td><code>user_context</code></td>
+            <td>object</td>
+            <td>optional</td>
+            <td>Age, dietary restrictions, current medications, severity (mild/moderate/severe)</td>
+          </tr>
+          <tr>
+            <td><code>duration_weeks</code></td>
+            <td>integer</td>
+            <td>optional</td>
+            <td>Protocol duration, 1–12 weeks (default: 4)</td>
+          </tr>
+        </table>
+        <h3>Example</h3>
+<pre><span class="comment"># Generate a hypertension protocol</span>
+curl -X POST <span class="url">"https://api.bons.ai/v1/protocol"</span> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -H <span class="string">"X-402-Payment: &lt;x402_payment_header&gt;"</span> \
+  -d '{
+    <span class="key">"condition"</span>: <span class="string">"hypertension"</span>,
+    <span class="key">"user_context"</span>: {
+      <span class="key">"age"</span>: 52,
+      <span class="key">"severity"</span>: <span class="string">"moderate"</span>
+    },
+    <span class="key">"duration_weeks"</span>: 4
+  }'</pre>
+      </div>
+    </div>
+
+    <!-- Tier 3: /lab-protocol -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method post">POST</span>
+        <span class="endpoint-path">/v1/lab-protocol</span>
+        <span class="endpoint-price">$0.45</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Generate a biomarker-calibrated dietary protocol using the B.O.N.S.A.I. labs engine. Features pattern recognition (insulin resistance cluster, dysbiosis cluster, cardiovascular risk cluster), risk stratification (red/orange/yellow/green), and optimal targets beyond standard reference ranges.</p>
+        <table class="param-table">
+          <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr>
+            <td><code>lab_values</code></td>
+            <td>object</td>
+            <td><span class="required">required</span></td>
+            <td>Key-value pairs of biomarker names and values with units</td>
+          </tr>
+          <tr>
+            <td><code>health_goals</code></td>
+            <td>array</td>
+            <td>optional</td>
+            <td>List of health goals</td>
+          </tr>
+          <tr>
+            <td><code>current_medications</code></td>
+            <td>array</td>
+            <td>optional</td>
+            <td>List of current medications</td>
+          </tr>
+          <tr>
+            <td><code>condition</code></td>
+            <td>string</td>
+            <td>optional</td>
+            <td>Primary condition if known</td>
+          </tr>
+        </table>
+        <h3>Example</h3>
+<pre><span class="comment"># Get a lab-informed protocol</span>
+curl -X POST <span class="url">"https://api.bons.ai/v1/lab-protocol"</span> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -H <span class="string">"X-402-Payment: &lt;x402_payment_header&gt;"</span> \
+  -d '{
+    <span class="key">"lab_values"</span>: {
+      <span class="key">"fasting_glucose"</span>: <span class="string">"105 mg/dL"</span>,
+      <span class="key">"HbA1c"</span>: <span class="string">"6.1%"</span>,
+      <span class="key">"LDL"</span>: <span class="string">"142 mg/dL"</span>,
+      <span class="key">"HDL"</span>: <span class="string">"38 mg/dL"</span>,
+      <span class="key">"triglycerides"</span>: <span class="string">"188 mg/dL"</span>,
+      <span class="key">"CRP"</span>: <span class="string">"3.2 mg/L"</span>
+    },
+    <span class="key">"health_goals"</span>: [<span class="string">"reduce inflammation"</span>, <span class="string">"improve insulin sensitivity"</span>],
+    <span class="key">"condition"</span>: <span class="string">"type_2_diabetes"</span>
+  }'</pre>
+      </div>
+    </div>
+
+    <!-- Tier 4: /assess -->
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method post">POST</span>
+        <span class="endpoint-path">/v1/assess</span>
+        <span class="endpoint-price">$0.85</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Full six-pillar lifestyle medicine assessment. Submit the user's current habits and receive personalized recommendations across nutrition, physical activity, sleep, stress management, substance avoidance, and social connection — with priority ranking, clinical basis, and a phased improvement plan.</p>
+        <table class="param-table">
+          <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+          <tr>
+            <td><code>current_habits</code></td>
+            <td>object</td>
+            <td><span class="required">required</span></td>
+            <td>Includes: diet_description, exercise_minutes_per_week, sleep_hours_per_night, stress_level, tobacco_use, alcohol_drinks_per_week, social_connection_quality</td>
+          </tr>
+          <tr>
+            <td><code>health_goals</code></td>
+            <td>array</td>
+            <td>optional</td>
+            <td>User's health goals</td>
+          </tr>
+          <tr>
+            <td><code>lab_values</code></td>
+            <td>object</td>
+            <td>optional</td>
+            <td>Optional lab values for enhanced personalization</td>
+          </tr>
+        </table>
+        <h3>Example</h3>
+<pre><span class="comment"># Run a full lifestyle assessment</span>
+curl -X POST <span class="url">"https://api.bons.ai/v1/assess"</span> \
+  -H <span class="string">"Content-Type: application/json"</span> \
+  -H <span class="string">"X-402-Payment: &lt;x402_payment_header&gt;"</span> \
+  -d '{
+    <span class="key">"current_habits"</span>: {
+      <span class="key">"diet_description"</span>: <span class="string">"Standard American diet, fast food 3x/week"</span>,
+      <span class="key">"exercise_minutes_per_week"</span>: 60,
+      <span class="key">"sleep_hours_per_night"</span>: 5.5,
+      <span class="key">"stress_level"</span>: <span class="string">"high"</span>,
+      <span class="key">"tobacco_use"</span>: false,
+      <span class="key">"alcohol_drinks_per_week"</span>: 8,
+      <span class="key">"social_connection_quality"</span>: <span class="string">"limited"</span>
+    },
+    <span class="key">"health_goals"</span>: [<span class="string">"lose weight"</span>, <span class="string">"sleep better"</span>, <span class="string">"reduce stress"</span>]
+  }'</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- MCP INTEGRATION -->
+  <section id="mcp">
+    <h2>MCP Integration</h2>
+    <p>B.O.N.S.A.I. is available as a <strong>Model Context Protocol (MCP)</strong> server, enabling native discovery by AI platforms like Claude, ChatGPT, and Gemini. Four tools are exposed:</p>
+
+    <table class="param-table">
+      <tr><th>Tool</th><th>Maps To</th><th>Description</th></tr>
+      <tr>
+        <td><code>health_query</code></td>
+        <td>GET /v1/query</td>
+        <td>Ask a health or nutrition question with optional pillar filtering</td>
+      </tr>
+      <tr>
+        <td><code>generate_protocol</code></td>
+        <td>POST /v1/protocol</td>
+        <td>Generate a food-as-medicine protocol for a specific condition</td>
+      </tr>
+      <tr>
+        <td><code>lab_informed_protocol</code></td>
+        <td>POST /v1/lab-protocol</td>
+        <td>Biomarker-calibrated protocol with pattern recognition</td>
+      </tr>
+      <tr>
+        <td><code>lifestyle_assessment</code></td>
+        <td>POST /v1/assess</td>
+        <td>Full six-pillar lifestyle assessment with phased plan</td>
+      </tr>
+    </table>
+
+    <div class="info-box">
+      <p><strong>For AI platform developers:</strong> The full MCP tool specification is available at <code>https://api.bons.ai/.well-known/mcp.json</code>. Register B.O.N.S.A.I. in your MCP directory to make it discoverable to your agents.</p>
+    </div>
+
+    <h3>Quick Start: Claude Desktop</h3>
+    <p>Add this to your <code>claude_desktop_config.json</code> and restart Claude. Your Claude will instantly have access to all four B.O.N.S.A.I. tools.</p>
+<pre><span class="comment">// ~/Library/Application Support/Claude/claude_desktop_config.json  (macOS)</span>
+<span class="comment">// %APPDATA%\Claude\claude_desktop_config.json                     (Windows)</span>
+{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"bonsai-health"</span>: {
+      <span class="key">"url"</span>: <span class="string">"https://web-production-ae61.up.railway.app"</span>
+    }
+  }
+}</pre>
+
+    <h3>Quick Start: Cursor</h3>
+    <p>Add this to your <code>.cursor/mcp.json</code> in any project root — or globally at <code>~/.cursor/mcp.json</code>.</p>
+<pre>{
+  <span class="key">"mcpServers"</span>: {
+    <span class="key">"bonsai-health"</span>: {
+      <span class="key">"url"</span>: <span class="string">"https://web-production-ae61.up.railway.app"</span>
+    }
+  }
+}</pre>
+
+    <h3>Quick Start: Any MCP Client</h3>
+    <p>Point any MCP-compatible client at the server URL. The tool manifest is auto-served at <code>/.well-known/mcp.json</code>.</p>
+<pre><span class="comment"># Server URL</span>
+<span class="url">https://web-production-ae61.up.railway.app</span>
+
+<span class="comment"># MCP Registry ID</span>
+<span class="string">io.github.rabyavalla/bonsai-health</span></pre>
+
+    <div class="info-box">
+      <p><strong>30-second setup:</strong> Copy one of the config blocks above, paste it into your config file, restart the client, and you're connected. No API keys needed — payment happens automatically via x402 when your agent calls a tool.</p>
+    </div>
+  </section>
+
+  <!-- x402 PAYMENT -->
+  <section id="payment">
+    <h2>x402 Payment Protocol</h2>
+    <p>All endpoints use the <strong>x402 protocol</strong> for payment. This means your agent pays per call using USDC on the Base network (Coinbase L2). No API keys, no OAuth, no billing accounts.</p>
+
+    <h3>How x402 works</h3>
+    <ol style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.25rem; line-height: 2;">
+      <li>Your agent makes a request to any endpoint without payment</li>
+      <li>The API responds with <code>402 Payment Required</code> and payment instructions</li>
+      <li>Your agent signs a USDC payment on Base and resends the request with the <code>X-402-Payment</code> header</li>
+      <li>The API verifies payment and returns the response</li>
+    </ol>
+
+    <div class="info-box">
+      <p><strong>Supported facilitator:</strong> Coinbase x402. Your agent needs a USDC balance on Base to make requests. See <a href="https://www.coinbase.com/x402" style="color: var(--green-mid);">coinbase.com/x402</a> for integration details.</p>
+    </div>
+  </section>
+
+  <!-- NOT COVERED -->
+  <section>
+    <h2>Scope &amp; Limitations</h2>
+    <p>B.O.N.S.A.I. provides evidence-based lifestyle medicine intelligence. It does <strong>not</strong> provide:</p>
+    <div class="conditions-grid">
+      <div class="condition-chip" style="border-color: #fca5a5; background: #fef2f2;">Emergency medical advice</div>
+      <div class="condition-chip" style="border-color: #fca5a5; background: #fef2f2;">Medication prescriptions</div>
+      <div class="condition-chip" style="border-color: #fca5a5; background: #fef2f2;">Medical diagnoses</div>
+      <div class="condition-chip" style="border-color: #fca5a5; background: #fef2f2;">Surgical recommendations</div>
+    </div>
+
+    <div class="warning-box">
+      <p><strong>Disclaimer:</strong> B.O.N.S.A.I. provides educational health and nutrition information grounded in peer-reviewed evidence. It is not a substitute for professional medical advice, diagnosis, or treatment. Always consult a qualified healthcare provider for medical decisions. Agents integrating this API should present responses as informational, not prescriptive.</p>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p><strong>B.O.N.S.A.I. Health Intelligence API</strong></p>
+    <p>Built by <a href="https://bons.ai">bons.ai</a> &mdash; Evidence-based nutrition intelligence for the agentic web</p>
+    <p style="margin-top: 0.75rem; font-size: 0.75rem; opacity: 0.7;">API v3.0.0 &bull; USDC on Base &bull; x402 Protocol &bull; MCP Compatible</p>
+  </footer>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    <p><strong>Medical Disclaimer:</strong> The B.O.N.S.A.I. Health Intelligence API provides educational information about nutrition and lifestyle medicine based on peer-reviewed evidence and clinical guidelines from organizations including the American College of Lifestyle Medicine (ACLM), American Heart Association (AHA), American Diabetes Association (ADA), and World Health Organization (WHO). This information is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of a qualified healthcare provider with any questions regarding a medical condition. Never disregard professional medical advice or delay in seeking it because of information provided by this API. If you think you may have a medical emergency, call your doctor or emergency services immediately.</p>
+  </div>
+
+</body>
+</html>
