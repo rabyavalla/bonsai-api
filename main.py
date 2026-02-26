@@ -17,11 +17,13 @@ MCP Hive target: March 8, 2026
 
 import time
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
 from typing import Optional
 
 import structlog
 from fastapi import FastAPI, Query, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -59,6 +61,50 @@ metrics = {
     "payments_failed": 0,
     "revenue_usdc": 0.0,
 }
+
+# ── Uptime tracking ──────────────────────────────────────────────────────────
+
+STARTED_AT = datetime.now(timezone.utc)
+
+
+# ── Request logging middleware ───────────────────────────────────────────────
+
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    """Log every request with method, path, status, latency, and client IP."""
+
+    async def dispatch(self, request: Request, call_next):
+        start = time.time()
+        client_ip = request.client.host if request.client else "unknown"
+        method = request.method
+        path = request.url.path
+
+        try:
+            response = await call_next(request)
+            latency_ms = round((time.time() - start) * 1000, 1)
+            logger.info(
+                "request",
+                method=method,
+                path=path,
+                status=response.status_code,
+                latency_ms=latency_ms,
+                client_ip=client_ip,
+            )
+            return response
+        except Exception as e:
+            latency_ms = round((time.time() - start) * 1000, 1)
+            metrics["errors_total"] += 1
+            logger.error(
+                "request_error",
+                method=method,
+                path=path,
+                error=str(e),
+                error_type=type(e).__name__,
+                latency_ms=latency_ms,
+                client_ip=client_ip,
+            )
+            raise
+
 
 # ── Rate limiter ──────────────────────────────────────────────────────────────
 
@@ -101,9 +147,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Middleware
+# Middleware (outermost runs first: CORS → Payment → Logging)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(X402PaymentMiddleware)
 app.add_middleware(
     CORSMiddleware,
@@ -166,11 +213,26 @@ def track_request(tier: str, latency_ms: float, price: float):
 
 @app.get("/v1/health")
 async def health_check():
-    """Health check — no payment required."""
+    """Health check — no payment required. Verifies dependency config."""
+    settings = get_settings()
+    now = datetime.now(timezone.utc)
+    uptime_seconds = int((now - STARTED_AT).total_seconds())
+
+    checks = {
+        "pinecone_key": bool(settings.pinecone_api_key),
+        "anthropic_key": bool(settings.anthropic_api_key),
+        "openai_key": bool(settings.openai_api_key),
+        "wallet_configured": bool(settings.bonsai_wallet_address),
+    }
+    all_ok = all(checks.values())
+
     return {
-        "status": "healthy",
+        "status": "healthy" if all_ok else "degraded",
         "service": "B.O.N.S.A.I. Health Intelligence API",
         "version": "3.0.0",
+        "started_at": STARTED_AT.isoformat(),
+        "uptime_seconds": uptime_seconds,
+        "checks": checks,
         "framework": "B.O.N.S.A.I.",
         "dietary_philosophy": "WFPB",
     }
@@ -407,8 +469,17 @@ async def get_metrics(request: Request):
         count = metrics["latency_count"][tier]
         avg_latency[tier] = round(metrics["latency_sum_ms"][tier] / count, 1) if count > 0 else 0
 
+    now = datetime.now(timezone.utc)
+    uptime_seconds = int((now - STARTED_AT).total_seconds())
+    total = metrics["requests_total"]
+    error_rate = round(metrics["errors_total"] / total, 4) if total > 0 else 0
+
     return {
-        "requests_total": metrics["requests_total"],
+        "started_at": STARTED_AT.isoformat(),
+        "uptime_seconds": uptime_seconds,
+        "requests_total": total,
+        "errors_total": metrics["errors_total"],
+        "error_rate": error_rate,
         "requests_by_tier": metrics["requests_by_tier"],
         "average_latency_ms": avg_latency,
         "payments_verified": metrics["payments_verified"],
