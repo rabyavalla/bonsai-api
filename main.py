@@ -70,13 +70,20 @@ retrieval: Optional[BonsaiRetrieval] = None
 agents: Optional[BonsaiAgents] = None
 
 
+def _get_retrieval_and_agents() -> tuple[BonsaiRetrieval, BonsaiAgents]:
+    """Lazy-initialize retrieval and agents on first request."""
+    global retrieval, agents
+    if retrieval is None:
+        logger.info("lazy_init", msg="Initializing retrieval and agents on first request...")
+        retrieval = BonsaiRetrieval()
+        agents = BonsaiAgents(retrieval)
+        logger.info("lazy_init_complete", msg="Retrieval and agents ready.")
+    return retrieval, agents
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global retrieval, agents
-    logger.info("startup", msg="Initializing B.O.N.S.A.I. API...")
-    retrieval = BonsaiRetrieval()
-    agents = BonsaiAgents(retrieval)
-    logger.info("startup_complete", msg="Retrieval and agents ready.")
+    logger.info("startup", msg="B.O.N.S.A.I. API starting (lazy init mode)...")
     yield
     logger.info("shutdown", msg="B.O.N.S.A.I. API shutting down.")
 
@@ -188,11 +195,12 @@ async def knowledge_query(
     Returns evidence-based answers with clinical citations.
     """
     start = time.time()
+    _retrieval, _agents = _get_retrieval_and_agents()
 
     logger.info("tier1_query", query=q, pillar=pillar, limit=limit)
 
-    results = await retrieval.query(question=q, top_k=limit, pillar=pillar)
-    response = retrieval.format_tier1_response(results, q, include_citations)
+    results = await _retrieval.query(question=q, top_k=limit, pillar=pillar)
+    response = _retrieval.format_tier1_response(results, q, include_citations)
 
     latency = (time.time() - start) * 1000
     track_request("tier_1", latency, 0.02)
@@ -222,9 +230,10 @@ async def generate_protocol(request: Request, body: ProtocolRequest):
             detail=f"Invalid condition. Must be one of: {valid_conditions}",
         )
 
+    _retrieval, _agents = _get_retrieval_and_agents()
     logger.info("tier2_protocol", condition=body.condition, duration=body.duration_weeks)
 
-    result = await agents.generate_protocol(
+    result = await _agents.generate_protocol(
         condition=body.condition,
         user_context=body.user_context,
         duration_weeks=body.duration_weeks,
@@ -251,9 +260,10 @@ async def lab_informed_protocol(request: Request, body: LabProtocolRequest):
     if not body.lab_values:
         raise HTTPException(status_code=400, detail="lab_values is required and must not be empty")
 
+    _retrieval, _agents = _get_retrieval_and_agents()
     logger.info("tier3_lab_protocol", num_markers=len(body.lab_values))
 
-    result = await agents.lab_informed_protocol(
+    result = await _agents.lab_informed_protocol(
         lab_values=body.lab_values,
         health_goals=body.health_goals,
         current_medications=body.current_medications,
@@ -281,9 +291,10 @@ async def lifestyle_assessment(request: Request, body: AssessmentRequest):
     if not body.current_habits:
         raise HTTPException(status_code=400, detail="current_habits is required")
 
+    _retrieval, _agents = _get_retrieval_and_agents()
     logger.info("tier4_assessment", has_labs=bool(body.lab_values))
 
-    result = await agents.lifestyle_assessment(
+    result = await _agents.lifestyle_assessment(
         current_habits=body.current_habits,
         health_goals=body.health_goals,
         lab_values=body.lab_values,
