@@ -176,50 +176,6 @@ async def health_check():
     }
 
 
-@app.get("/v1/debug/connectivity")
-async def debug_connectivity():
-    """Diagnostic endpoint — tests connectivity to OpenAI and Pinecone. Remove before production."""
-    import os
-    results = {}
-
-    # Check env vars (show first/last 4 chars only)
-    oai_key = os.environ.get("OPENAI_API_KEY", "")
-    pc_key = os.environ.get("PINECONE_API_KEY", "")
-    results["openai_key_set"] = bool(oai_key)
-    results["openai_key_preview"] = f"{oai_key[:8]}...{oai_key[-4:]}" if len(oai_key) > 12 else "too_short"
-    results["pinecone_key_set"] = bool(pc_key)
-
-    # Test OpenAI connectivity
-    try:
-        from openai import AsyncOpenAI
-        settings = get_settings()
-        client = AsyncOpenAI(api_key=settings.openai_api_key)
-        resp = await client.embeddings.create(
-            model="text-embedding-3-small",
-            input=["test"],
-            dimensions=1536,
-        )
-        results["openai_status"] = "ok"
-        results["openai_embedding_dim"] = len(resp.data[0].embedding)
-    except Exception as e:
-        results["openai_status"] = "error"
-        results["openai_error"] = f"{type(e).__name__}: {str(e)[:300]}"
-
-    # Test Pinecone connectivity
-    try:
-        from pinecone import Pinecone
-        settings = get_settings()
-        pc = Pinecone(api_key=settings.pinecone_api_key)
-        index = pc.Index(settings.pinecone_index_name)
-        stats = index.describe_index_stats()
-        results["pinecone_status"] = "ok"
-        results["pinecone_vectors"] = stats.total_vector_count
-    except Exception as e:
-        results["pinecone_status"] = "error"
-        results["pinecone_error"] = f"{type(e).__name__}: {str(e)[:300]}"
-
-    return results
-
 
 @app.get("/v1/query")
 @limiter.limit("100/minute")
