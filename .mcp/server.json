@@ -1,0 +1,76 @@
+{
+  "$schema": "https://registry.modelcontextprotocol.io/schemas/server.json",
+  "name": "io.github.rabyavalla/bonsai-health",
+  "version": "3.0.0",
+  "title": "B.O.N.S.A.I. Health Intelligence API",
+  "description": "Evidence-based whole-food plant-based (WFPB) lifestyle medicine intelligence. 4 paid API tiers powered by x402 micropayments (USDC on Base). Backed by ACLM, AHA, ADA, WHO, and 637+ peer-reviewed references. Tools: health_query ($0.02), generate_protocol ($0.20), lab_informed_protocol ($0.45), lifestyle_assessment ($0.85).",
+  "repository": {
+    "url": "https://github.com/rabyavalla/bonsai-api",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "transportType": "http",
+      "url": "https://web-production-ae61.up.railway.app"
+    }
+  ],
+  "tools": [
+    {
+      "name": "health_query",
+      "description": "Ask a health, nutrition, or lifestyle medicine question. Returns evidence-based answers with clinical citations.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string", "description": "Natural language health question" },
+          "pillar": { "type": "string", "enum": ["nutrition", "physical_activity", "sleep", "stress_management", "substance_avoidance", "social_connection", "any"], "default": "any" },
+          "max_results": { "type": "integer", "default": 3, "minimum": 1, "maximum": 10 }
+        },
+        "required": ["query"]
+      },
+      "annotations": { "pricing": { "amount": "0.02", "currency": "USDC", "protocol": "x402" } }
+    },
+    {
+      "name": "generate_protocol",
+      "description": "Generate a B.O.N.S.A.I.-scored food-as-medicine protocol for a specific health condition.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "condition": { "type": "string", "enum": ["hypertension", "type_2_diabetes", "hyperlipidemia", "autoimmune", "gi_health", "weight_management"] },
+          "user_context": { "type": "object" },
+          "duration_weeks": { "type": "integer", "default": 4 }
+        },
+        "required": ["condition"]
+      },
+      "annotations": { "pricing": { "amount": "0.20", "currency": "USDC", "protocol": "x402" } }
+    },
+    {
+      "name": "lab_informed_protocol",
+      "description": "Generate a biomarker-calibrated dietary protocol using the B.O.N.S.A.I. labs engine.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "lab_values": { "type": "object", "description": "Key-value pairs of biomarker names and values" },
+          "health_goals": { "type": "array", "items": { "type": "string" } },
+          "current_medications": { "type": "array", "items": { "type": "string" } },
+          "condition": { "type": "string" }
+        },
+        "required": ["lab_values"]
+      },
+      "annotations": { "pricing": { "amount": "0.45", "currency": "USDC", "protocol": "x402" } }
+    },
+    {
+      "name": "lifestyle_assessment",
+      "description": "Full six-pillar B.O.N.S.A.I. lifestyle assessment with personalized recommendations across nutrition, exercise, sleep, stress, supplements, and labs.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "current_habits": { "type": "object" },
+          "health_goals": { "type": "array", "items": { "type": "string" } },
+          "lab_values": { "type": "object" }
+        },
+        "required": ["current_habits"]
+      },
+      "annotations": { "pricing": { "amount": "0.85", "currency": "USDC", "protocol": "x402" } }
+    }
+  ]
+}
